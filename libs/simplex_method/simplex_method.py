@@ -32,6 +32,7 @@ class SimplexMethod:
         conditions_signs = []
         leq_count = 0
         geq_count = 0
+        eq_count = 0
         for condition in conditions:
             clean_conditions.append(condition[0][:len(condition[0])-1])
             conditions_free_elements.append(condition[0][len(condition[0])-1])
@@ -41,25 +42,35 @@ class SimplexMethod:
             elif condition[1] is Sign.LEQ:
                 leq_count += 1
             else:
-                raise NotImplementedError("Will be added soon (may be)")
+                eq_count += 1
+
+        # help function
+        def remove_zero_columns(arr: np.ndarray):
+            idx = np.argwhere(np.all(arr[..., :] == 0, axis=0))
+            return np.delete(arr, idx, axis=1)
 
         # lengths
         conditions_count = len(clean_conditions)
         default_vars_count = len(clean_conditions[0])
         # build the simplex table
-        simplex_table = np.zeros((conditions_count+1+geq_count, default_vars_count+conditions_count+geq_count+1))
+        simplex_table = np.zeros((conditions_count+1+geq_count+eq_count, default_vars_count+2*conditions_count+1))
         # add default conditions and function ([0:conditions_count+1, default_vars_count] used)
         simplex_table[0:conditions_count, 0:default_vars_count] = clean_conditions
         simplex_table[conditions_count, 0:default_vars_count] = function*-1
         # add new basis variables to top
         diag_matrix = np.eye(conditions_count)
-        where_leq = np.array([list(map(lambda sign: int(sign)-2, conditions_signs))]).T
-        simplex_table[0:conditions_count, default_vars_count:default_vars_count+conditions_count] = diag_matrix * where_leq
+        operators_matrix = \
+            np.array([list(map(lambda sign: int(sign)-2, conditions_signs))]).T  # [-1 for GEQ, 1 for LEQ, 0 for GEQ]^T
+        diag_operators_matrix = diag_matrix * operators_matrix
+        simplex_table[0:conditions_count, default_vars_count:default_vars_count+conditions_count] = \
+            diag_operators_matrix
+
         # add synthetic variables to top
-        if geq_count > 0:
-            diag_matrix = np.eye(geq_count)
-            simplex_table[0:conditions_count, default_vars_count+conditions_count:default_vars_count+conditions_count+geq_count] \
-                = diag_matrix * np.abs(where_leq-1)/2
+        if geq_count+eq_count > 0:
+            diag_matrix = np.eye(conditions_count)
+            diag_operators_matrix = diag_matrix * np.abs(operators_matrix-2)//2
+            simplex_table[0:conditions_count, default_vars_count+conditions_count:default_vars_count+2*conditions_count] \
+                = diag_operators_matrix
         # add free element
         simplex_table[0:conditions_count, simplex_table.shape[1]-1] = conditions_free_elements
         # add synthetic functions
@@ -70,22 +81,23 @@ class SimplexMethod:
                 i += 1
                 continue
             simplex_table[conditions_count + 1 + j, :] = simplex_table[i, :] * -1
-            simplex_table[conditions_count + 1 + j, default_vars_count+conditions_count+j] = 0
+            simplex_table[conditions_count + 1 + j, default_vars_count+leq_count+geq_count+i] = 0
             i += 1
             j += 1
+        simplex_table = remove_zero_columns(simplex_table)
 
         # form basis map
         simplex_basis_map = []
         for i in range(len(conditions_signs)):
             if conditions_signs[i] is Sign.LEQ:
                 simplex_basis_map.append("x_%s" % str(default_vars_count + i + 1))
-        simplex_basis_map.extend(["r_%s" % str(i + 1) for i in range(geq_count)])
+        simplex_basis_map.extend(["r_%s" % str(i + 1) for i in range(geq_count+eq_count)])
         simplex_basis_map.append("f")
-        simplex_basis_map.extend(["W_%s" % str(i + 1) for i in range(geq_count)])
+        simplex_basis_map.extend(["W_%s" % str(i + 1) for i in range(geq_count+eq_count)])
 
         # form top map
-        simplex_top_map = ["x_%s" % str(i + 1) for i in range(default_vars_count+conditions_count)]
-        simplex_top_map.extend(["r_%s" % str(i + 1) for i in range(geq_count)])
+        simplex_top_map = ["x_%s" % str(i + 1) for i in range(default_vars_count+leq_count+geq_count)]
+        simplex_top_map.extend(["r_%s" % str(i + 1) for i in range(geq_count+eq_count)])
         simplex_top_map.append("free")
 
         # f_index
