@@ -5,5 +5,10 @@ conditions = [
     ([1, 1, 2], Sign.LEQ),
     ([2, 3, 6], Sign.GEQ),
 ]
-sm2 = SimplexMethod.problem(function, conditions)
-print(sm2.calculate())
+sm = SimplexMethod.problem(function, conditions)
+sm_result = sm.calculate()
+print(sm_result)
+if sm_result is not None:
+    for matrix in sm_result.simplex_tables:
+        print(matrix)
+

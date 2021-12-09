@@ -1,5 +1,6 @@
 from enum import IntEnum
 import numpy as np
+from libs.simplex_method.simplex_method_result import SimplexMethodResult
 
 
 class Sign(IntEnum):
@@ -9,13 +10,15 @@ class Sign(IntEnum):
 
 
 class SimplexMethod:
-    skip = float('inf')
+    SKIP = float('inf')
     ITER_LIMIT = 9999999
 
     simplex_table = None
     simplex_basis_map = None
     simplex_top_map = None
     f_index = None
+
+    __method_result = None
 
     def __init__(self, simplex_table, simplex_basis_map, simplex_top_map, f_index):
         self.simplex_table = simplex_table
@@ -105,14 +108,45 @@ class SimplexMethod:
 
         return cls(simplex_table, simplex_basis_map, simplex_top_map, f_index)
 
-    def calculate(self):
+    def calculate(self) -> SimplexMethodResult:
+        try:
+            result = self.__calculate()
+            return result
+        except AssertionError as e:
+            if self.__method_result is None:
+                return None
+            self.__method_result.error = True
+            self.__method_result.error_message = e
+            return self.__method_result
+
+    def __calculate(self) -> SimplexMethodResult:
         simplex_basis_map = self.simplex_basis_map
         simplex_top_map = self.simplex_top_map
         simplex_1 = self.simplex_table
 
+        # result var
+        self.__method_result = SimplexMethodResult()
+        method_result = self.__method_result
+
         iter_number = 0
         while iter_number <= self.ITER_LIMIT:
-            relation = np.repeat(self.skip, len(simplex_basis_map))
+            # remove additional basis functions (if need)
+            for i in range(len(simplex_basis_map) - 1, self.f_index, -1):
+                if np.min(simplex_1[i, :len(simplex_top_map) - 1]) >= 0:
+                    simplex_1 = np.delete(simplex_1, i, axis=0)
+                    simplex_1 = np.delete(simplex_1, len(simplex_top_map) - 2, axis=1)
+                    simplex_top_map = np.delete(simplex_top_map, len(simplex_top_map) - 1)
+                    simplex_basis_map = np.delete(simplex_basis_map, len(simplex_basis_map) - 1)
+
+            # stop condition
+            if np.min(simplex_1[self.f_index, :len(simplex_top_map) - 1]) >= 0 and \
+                    self.f_index == simplex_1.shape[0] - 1:
+                break
+
+            # relation column
+            relation = np.repeat(self.SKIP, len(simplex_basis_map))
+
+            # additional variable: index of the free element column
             free_ind = len(simplex_top_map) - 1
 
             # find main column
@@ -120,13 +154,22 @@ class SimplexMethod:
 
             # find relation
             for i in range(len(relation)):
-                val = self.skip
+                val = self.SKIP
                 if simplex_1[i, free_ind] > 0 and simplex_1[i, main_column] > 0:
                     val = simplex_1[i, free_ind] / simplex_1[i, main_column]
                 relation[i] = val
 
             # find main row
             main_row = SimplexMethod._get_main_row(relation)
+
+            # add table to result
+            method_result.add_simplex_table(
+                header=simplex_top_map + ['relation'],
+                basis=simplex_basis_map,
+                values=np.c_[simplex_1, relation],
+                main_column_index=main_column,
+                main_row_index=main_row,
+            )
 
             # find and work with main element
             main_el = simplex_1[main_row, main_column]
@@ -146,23 +189,18 @@ class SimplexMethod:
             # change basis
             simplex_basis_map[main_row] = simplex_top_map[main_column]
 
-            # remove additional basis functions
-            for i in range(len(simplex_basis_map) - 1, self.f_index, -1):
-                if np.min(simplex_1[i, :len(simplex_top_map) - 1]) >= 0:
-                    simplex_1 = np.delete(simplex_1, i, axis=0)
-                    simplex_1 = np.delete(simplex_1, len(simplex_top_map) - 2, axis=1)
-                    simplex_top_map = np.delete(simplex_top_map, len(simplex_top_map) - 1)
-                    simplex_basis_map = np.delete(simplex_basis_map, len(simplex_basis_map) - 1)
-
-            # stop condition
-            if np.min(simplex_1[self.f_index, :len(simplex_top_map) - 1]) >= 0:
-                break
-
-            assert relation.min() != self.skip, 'can\'t find any decision'
+            assert relation.min() != self.SKIP, 'can\'t find any decision'
             iter_number += 1
 
-        print(simplex_basis_map)
-        return simplex_1[:, simplex_1.shape[1]-1]
+        # fill and return result
+        method_result.add_simplex_table(
+            header=simplex_top_map,
+            basis=simplex_basis_map,
+            values=simplex_1,
+        )
+        method_result.result_free_elements = simplex_1[:, simplex_1.shape[1]-1]
+        method_result.result_basis = simplex_basis_map
+        return method_result
 
     @staticmethod
     def _get_main_column(simplex: np.ndarray) -> int:
