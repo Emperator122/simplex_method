@@ -1,0 +1,19 @@
+<BorderedLabel>:
+    font_size: 20
+    background_color: 1, 1, 1, 1
+    background_normal: ""
+    canvas.before:
+        Color:
+            rgba: 0, 1, 0, 0.5
+        Line:    # --- adds a border --- #
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+<SimplexTableGrid>:
+    cols: 3
+    canvas.before:
+        Color:
+            rgba: 0, 1, 0, 0.5
+        Line:    # --- adds a border --- #
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height

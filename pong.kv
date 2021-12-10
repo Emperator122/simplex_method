@@ -1,0 +1,120 @@
+#:import SimplexTableGrid widgets.simplex_table
+
+<SimplexTableScreen>:
+
+    BoxLayout:
+        orientation: 'vertical'
+        size: self.parent.size
+        pos: self.parent.pos
+
+        ScrollView:
+            SimplexTableGrid:
+                id: simplex_table_1
+                padding: [0, 0, 0, 0]
+                minimum_height: 10
+                size_hint_y: None
+                size_hint: (1, .9)
+
+                sm_result: root.sm_result
+
+        Label:
+            size_hint: (1, .1)
+            text: 'Таблица: ' + str(simplex_table_1.current_index+1) + ' из ' + str(simplex_table_1.count)
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, .2)
+
+            Button:
+                text: 'Previous'
+                on_press: simplex_table_1.load_previous()
+            Button:
+                text: 'Next'
+                on_press: simplex_table_1.load_next()
+
+
+<LimitationWidget>:
+
+    TextInput:
+        multiline: False
+        size_hint: (None, .5)
+        width: 40
+        on_text: root.coefficients = self.text
+
+    DropDown:
+        id: drop_down
+        Button:
+            text: '<='
+            size_hint_y: None
+            height: 15
+            on_press: drop_down.select(self.text)
+
+        Button:
+            text: '='
+            size_hint_y: None
+            height: 15
+            on_press: drop_down.select(self.text)
+
+        Button:
+            text: '>='
+            size_hint_y: None
+            height: 15
+            on_press: drop_down.select(self.text)
+
+    TextInput:
+        multiline: False
+        size_hint: (None, .5)
+        width: 40
+        on_text: root.free_coefficient = self.text
+
+
+<InputScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+
+        Label:
+            size_hint: (1, .1)
+            text: 'Введите коэффициенты для f(x)'
+        TextInput:
+            id: f_input
+            multiline: False
+
+        Label:
+            text: 'Ограничения'
+            size_hint: (1, .1)
+
+        Label:
+            text: 'Коэффициенты левой части; знак; свободный член'
+            size_hint: (1, .2)
+
+        ScrollView:
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                LimitationWidget:
+                    size_hint: (1, .2)
+
+                LimitationWidget:
+                    size_hint: (1, .2)
+
+
+        Button:
+            text: 'Next screen'
+            on_press: root.manager.open_screen('simplex_tables_screen', {'sm_result': root.calculate() })
+
+
+<Navigator>:
+    id: navigator
+
+    input_screen: input_screen
+    simplex_tables_screen: simplex_tables_screen
+
+    InputScreen:
+        id: input_screen
+        name: 'input_screen'
+        manager: navigator
+
+    SimplexTableScreen:
+        id: simplex_tables_screen
+        name: "simplex_tables_screen"
+        manager: navigator
