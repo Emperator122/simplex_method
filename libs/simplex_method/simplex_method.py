@@ -1,12 +1,6 @@
-from enum import IntEnum
 import numpy as np
 from libs.simplex_method.simplex_method_result import SimplexMethodResult
-
-
-class Sign(IntEnum):
-    LEQ = 3
-    EQ = 2
-    GEQ = 1
+from libs.simplex_method.task_enums import Extremum, Sign
 
 
 class SimplexMethod:
@@ -16,18 +10,20 @@ class SimplexMethod:
     simplex_table = None
     simplex_basis_map = None
     simplex_top_map = None
+    extremum = None
     f_index = None
 
     __method_result = None
 
-    def __init__(self, simplex_table, simplex_basis_map, simplex_top_map, f_index):
+    def __init__(self, simplex_table, simplex_basis_map, simplex_top_map, f_index, extremum=Extremum.MAX):
         self.simplex_table = simplex_table
         self.simplex_basis_map = simplex_basis_map
         self.simplex_top_map = simplex_top_map
         self.f_index = f_index
+        self.extremum = extremum
 
     @classmethod
-    def problem(cls, function, conditions):
+    def problem(cls, function, conditions, extremum=Extremum.MAX):
         function = np.array(function)
 
         clean_conditions = []
@@ -106,7 +102,7 @@ class SimplexMethod:
         # f_index
         f_index = conditions_count
 
-        return cls(simplex_table, simplex_basis_map, simplex_top_map, f_index)
+        return cls(simplex_table, simplex_basis_map, simplex_top_map, f_index, extremum)
 
     def calculate(self) -> SimplexMethodResult:
         try:
@@ -114,12 +110,16 @@ class SimplexMethod:
             return result
         except AssertionError as e:
             if self.__method_result is None:
-                return None
+                return SimplexMethodResult.unknown(e)
             self.__method_result.error = True
             self.__method_result.error_message = e
             return self.__method_result
 
     def __calculate(self) -> SimplexMethodResult:
+        """
+        Calculates maximum of function using the source simplex table
+        :return: SimplexMethodResult
+        """
         simplex_basis_map = self.simplex_basis_map
         simplex_top_map = self.simplex_top_map
         simplex_1 = self.simplex_table
@@ -127,6 +127,13 @@ class SimplexMethod:
         # result var
         self.__method_result = SimplexMethodResult()
         method_result = self.__method_result
+        method_result.extremum = self.extremum
+
+        # check extremum type
+        if self.extremum is Extremum.MIN:
+            simplex_1[self.f_index, :] *= -1
+        elif self.extremum is not Extremum.MAX:
+            assert False, 'Wrong extremum value'
 
         iter_number = 0
         while iter_number <= self.ITER_LIMIT:
@@ -164,7 +171,7 @@ class SimplexMethod:
 
             # add table to result
             method_result.add_simplex_table(
-                header=simplex_top_map + ['relation'],
+                header=np.r_[simplex_top_map, ['relation']],
                 basis=simplex_basis_map,
                 values=np.c_[simplex_1, relation],
                 main_column_index=main_column,
@@ -198,6 +205,17 @@ class SimplexMethod:
             basis=simplex_basis_map,
             values=simplex_1,
         )
+        # for min add additional simplex table
+        if self.extremum is Extremum.MIN:
+            temp = np.copy(simplex_1)
+            temp[self.f_index, len(simplex_top_map) - 1] *= -1
+            method_result.add_simplex_table(
+                header=simplex_top_map,
+                basis=simplex_basis_map,
+                values=temp,
+            )
+            simplex_1 = temp
+
         method_result.result_free_elements = simplex_1[:, simplex_1.shape[1]-1]
         method_result.result_basis = simplex_basis_map
         return method_result
