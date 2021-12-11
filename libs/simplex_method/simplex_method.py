@@ -138,12 +138,23 @@ class SimplexMethod:
         iter_number = 0
         while iter_number <= self.ITER_LIMIT:
             # remove additional basis functions (if need)
-            for i in range(len(simplex_basis_map) - 1, self.f_index, -1):
-                if np.min(simplex_1[i, :len(simplex_top_map) - 1]) >= 0:
-                    simplex_1 = np.delete(simplex_1, i, axis=0)
-                    simplex_1 = np.delete(simplex_1, len(simplex_top_map) - 2, axis=1)
-                    simplex_top_map = np.delete(simplex_top_map, len(simplex_top_map) - 1)
-                    simplex_basis_map = np.delete(simplex_basis_map, len(simplex_basis_map) - 1)
+            synthetics_count = len(simplex_basis_map) - 1 - self.f_index
+            removed_count = 0
+            for i in range(synthetics_count):
+                # start from the end
+                basis_index = len(simplex_basis_map) - 1 - i + removed_count
+                header_index = len(simplex_top_map) - 2 - i + removed_count  # -2 because free_element
+
+                # header without free element and synthetic variables
+                check_interval = len(simplex_top_map) - 1 - synthetics_count
+                if np.max(simplex_1[basis_index, :check_interval]) == 0:  # if we have only zeros on  check_interval
+                    # remove variable and function from simplex table, basis_map and top_map
+                    simplex_1 = np.delete(simplex_1, basis_index, axis=0)
+                    simplex_1 = np.delete(simplex_1, header_index, axis=1)
+                    simplex_top_map = np.delete(simplex_top_map, header_index)
+                    simplex_basis_map = np.delete(simplex_basis_map, basis_index)
+                    synthetics_count -= 1
+                    removed_count += 1
 
             # stop condition
             if np.min(simplex_1[self.f_index, :len(simplex_top_map) - 1]) >= 0 and \
@@ -157,22 +168,20 @@ class SimplexMethod:
             free_ind = len(simplex_top_map) - 1
 
             # find main column
-            main_column = SimplexMethod._get_main_column(simplex_1)
+            main_column = SimplexMethod._get_main_column(simplex_1, self.f_index)
 
             # find relation
-            for i in range(len(relation)):
-                val = self.SKIP
-                if simplex_1[i, free_ind] > 0 and simplex_1[i, main_column] > 0:
-                    val = simplex_1[i, free_ind] / simplex_1[i, main_column]
-                relation[i] = val
+            for basis_index in range(self.f_index):
+                if simplex_1[basis_index, free_ind] >= 0 and simplex_1[basis_index, main_column] > 0:
+                    relation[basis_index] = simplex_1[basis_index, free_ind] / simplex_1[basis_index, main_column]
 
             # find main row
-            main_row = SimplexMethod._get_main_row(relation)
+            main_row = SimplexMethod._get_main_row(relation, simplex_1, main_column)
 
             # add table to result
             method_result.add_simplex_table(
                 header=np.r_[simplex_top_map, ['relation']],
-                basis=simplex_basis_map,
+                basis=simplex_basis_map.copy(),
                 values=np.c_[simplex_1, relation],
                 main_column_index=main_column,
                 main_row_index=main_row,
@@ -187,10 +196,10 @@ class SimplexMethod:
             # build next simplex table
             simplex_2 = np.zeros(simplex_1.shape) * 1.0
             simplex_2[main_row, :] = simplex_1[main_row, :]
-            for i in range(len(simplex_basis_map)):
-                if i == main_row:
+            for basis_index in range(len(simplex_basis_map)):
+                if basis_index == main_row:
                     continue
-                simplex_2[i, :] = simplex_1[i, :] - simplex_1[i, main_column] * simplex_1[main_row, :]
+                simplex_2[basis_index, :] = simplex_1[basis_index, :] - simplex_1[basis_index, main_column] * simplex_1[main_row, :]
             simplex_1 = np.copy(simplex_2)
 
             # change basis
@@ -221,11 +230,51 @@ class SimplexMethod:
         return method_result
 
     @staticmethod
-    def _get_main_column(simplex: np.ndarray) -> int:
-        arg_min_last_row = simplex[simplex.shape[0] - 1, :simplex.shape[1] - 1].argmin()
-        return arg_min_last_row
+    def _get_main_column(simplex: np.ndarray, f_index) -> int:
+        def get_min_indexes(array) -> np.ndarray:  # help function
+            min_el = np.min(array)
+            return np.argwhere(array == min_el)
+
+        # if we have synthetic functions
+        if f_index < simplex.shape[0]-1:
+            # sum all synthetic functions
+            temp = np.sum(simplex[f_index+1:simplex.shape[0], :simplex.shape[1] - 1], axis=0)
+            min_indexes = get_min_indexes(temp)
+            if len(min_indexes) == 1:  # if we have only one min_index then just return it
+                return min_indexes[0][0]
+            else:  # else find f values on these indexes and return minimum
+                f_values = [simplex[f_index, i] for i in min_indexes]
+                return min_indexes[get_min_indexes(f_values)[0][0]][0]
+
+        # just find min value and return it
+        min_indexes = get_min_indexes(simplex[f_index, :simplex.shape[1] - 1])
+        return min_indexes[0][0]
 
     @staticmethod
-    def _get_main_row(relation: np.ndarray) -> int:
-        arg_min = relation.argmin()
-        return arg_min
+    def _get_main_row(relation: np.ndarray, simplex: np.ndarray, main_column_index: int) -> int:
+        def get_min_indexes(array) -> np.ndarray:  # help function
+            min_el = np.min(array)
+            return np.argwhere(array == min_el)
+
+        min_indexes = get_min_indexes(relation)
+        # if we find one min_index then return it
+        if len(min_indexes) == 1:
+            return min_indexes[0][0]
+
+        # else use Bland's rule
+        help_table = []
+        for i_ in min_indexes:  # build help table
+            i = i_[0]
+            main_el = simplex[i, main_column_index]
+            if main_el == 0:
+                continue
+            help_table.append((np.array([simplex[i, :]])/main_el)[0])
+        # find first row with min column value
+        help_table = np.array(help_table)
+        for j in range(help_table.shape[1]):
+            temp_indexes = get_min_indexes(help_table[:, j])
+            if len(temp_indexes) == 1:
+                return temp_indexes[0][0]
+
+        # else return first index
+        return min_indexes[0][0]

@@ -31,7 +31,7 @@ class SimplexMethodResult:
         if self.error:
             description += 'Error description:\r\n"%s";' % self.error_message
         description += 'Basis is:\t\t%s;\r\nFree elements:\t%s.\r\n' % (self.result_basis, self.result_free_elements)
-        if self.extremum is Extremum.MIN:
+        if self.extremum is Extremum.MIN and not self.error:
             description += 'Because you searching MIN additional simplex table was added. result_free_elements ' \
                            'contains f multiplied by -1.\r\n'
         return description
@@ -66,7 +66,7 @@ class SimplexTable:
             basis_item = self.basis[i]
             description += '%-12s' % basis_item
             for j in range(self.values.shape[1]):
-                description += '%-12s' % self.values[i, j]
+                description += '%-12f' % self.values[i, j]
             description += '\r\n'
 
         return description
