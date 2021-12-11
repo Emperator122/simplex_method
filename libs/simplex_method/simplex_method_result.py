@@ -1,16 +1,25 @@
 import numpy as np
+from libs.simplex_method.task_enums import Extremum
 
 
 class SimplexMethodResult:
     simplex_tables = []
-    result_free_elements = None
-    result_basis = None
+    result_free_elements = []
+    result_basis = []
     error = False
     error_message = None
+    extremum = Extremum.UNKNOWN
 
     @property
     def iter_count(self):
         return len(self.simplex_tables)
+
+    @classmethod
+    def unknown(cls, error_message='Unknown error'):
+        result = cls()
+        result.error = True
+        result.error_message = error_message
+        return result
 
     def add_simplex_table(self, header, basis, values, main_row_index=-1, main_column_index=-1):
         self.simplex_tables.append(
@@ -21,7 +30,10 @@ class SimplexMethodResult:
         description = 'SimplexMethodResult\r\nError: %s;\r\n' % self.error
         if self.error:
             description += 'Error description:\r\n"%s";' % self.error_message
-        description += 'Basis is:\t\t%s;\r\nFree elements:\t%s.' % (self.result_basis, self.result_free_elements)
+        description += 'Basis is:\t\t%s;\r\nFree elements:\t%s.\r\n' % (self.result_basis, self.result_free_elements)
+        if self.extremum is Extremum.MIN and not self.error:
+            description += 'Because you searching MIN additional simplex table was added. result_free_elements ' \
+                           'contains f multiplied by -1.\r\n'
         return description
 
 
@@ -54,7 +66,7 @@ class SimplexTable:
             basis_item = self.basis[i]
             description += '%-12s' % basis_item
             for j in range(self.values.shape[1]):
-                description += '%-12s' % self.values[i, j]
+                description += '%-12f' % self.values[i, j]
             description += '\r\n'
 
         return description
