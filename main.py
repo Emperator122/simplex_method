@@ -2,7 +2,7 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from libs.simplex_method.simplex_method import SimplexMethod, Sign
 from kivy.properties import (
-    NumericProperty, ReferenceListProperty, ObjectProperty
+    NumericProperty, ReferenceListProperty, ObjectProperty, StringProperty
  )
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition, WipeTransition
@@ -28,8 +28,16 @@ class SimplexTableScreen(Screen):
 
 class LimitationWidget(BoxLayout):
     coefficients = ObjectProperty(None)
-    sign = ObjectProperty(None)
+    sign = StringProperty(None)
     free_coefficient = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'horizontal'
+
+
+class SignDropDown(BoxLayout):
+    selected_value = StringProperty('?')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -38,7 +46,8 @@ class LimitationWidget(BoxLayout):
 
 class InputScreen(Screen):
     f = ObjectProperty(None)
-    limitations = ObjectProperty([])
+    limitations_list = ObjectProperty([])
+    limitations_list_layout = ObjectProperty(None)
 
     def calculate(self):
         function = [1, 3]
@@ -49,6 +58,16 @@ class InputScreen(Screen):
         sm = SimplexMethod.problem(function, conditions)
         sm_result = sm.calculate()
         return sm_result
+
+    def add_limitation(self):
+        self.limitations_list_layout.add_widget(LimitationWidget(size_hint=(1, None), height=60))
+
+    def remove_last_limitation(self):
+        layout = self.limitations_list_layout
+        if len(layout.children) == 0:
+            return
+        layout.remove_widget(layout.children[0])
+
 
 
 class PongApp(App):
