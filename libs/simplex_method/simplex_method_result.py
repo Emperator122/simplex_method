@@ -3,9 +3,9 @@ from libs.simplex_method.task_enums import Extremum
 
 
 class SimplexMethodResult:
-    simplex_tables = []
-    result_free_elements = []
-    result_basis = []
+    simplex_tables = None
+    result_free_elements = None
+    result_basis = None
     error = False
     error_message = None
     extremum = Extremum.UNKNOWN
@@ -20,6 +20,11 @@ class SimplexMethodResult:
         result.error = True
         result.error_message = error_message
         return result
+
+    def __init__(self):
+        self.simplex_tables = []
+        self.result_free_elements = []
+        self.result_basis = []
 
     def add_simplex_table(self, header, basis, values, main_row_index=-1, main_column_index=-1):
         self.simplex_tables.append(
