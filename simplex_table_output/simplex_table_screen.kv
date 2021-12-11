@@ -1,0 +1,47 @@
+#:import SimplexTableGrid simplex_table_output.simplex_table
+
+<SimplexTableScreen>:
+
+    BoxLayout:
+        orientation: 'vertical'
+        size: self.parent.size
+        pos: self.parent.pos
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, .1)
+            padding: [5, 10, 5, 5]
+
+            Button:
+                size_hint: (.1, 1)
+                text: 'К вводу'
+                on_release: root.manager.open_screen('input_screen')
+
+            Label:
+                text: "Симплекс таблицы"
+
+        ScrollView:
+            SimplexTableGrid:
+                id: simplex_table_1
+                padding: [0, 0, 0, 0]
+                height: self.minimum_height
+                size_hint_y: None
+                size_hint: (1, .9)
+
+                sm_result: root.sm_result
+
+        Label:
+            size_hint: (1, .1)
+            text: 'Таблица: ' + str(simplex_table_1.current_index+1) + ' из ' + str(simplex_table_1.count)
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, .1)
+            spacing: 10
+            padding: [10, 3, 3, 10]
+            Button:
+                text: 'Предыдущая'
+                on_press: simplex_table_1.load_previous()
+            Button:
+                text: 'Следующая'
+                on_press: simplex_table_1.load_next()

@@ -1,0 +1,52 @@
+<SignDropDown>:
+    drop_down: drop_down.__self__
+    Button:
+        size_hint: (.1, .6)
+        text: root.selected_value
+        on_release: drop_down.open(self)
+        on_parent: drop_down.dismiss()
+
+    DropDown:
+        id: drop_down
+        on_select: root.selected_value = '{}'.format(args[1])
+        Button:
+            text: '<='
+            size_hint_y: None
+            height: 30
+            on_press: drop_down.select(self.text)
+
+        Button:
+            text: '='
+            size_hint_y: None
+            height: 30
+            on_press: drop_down.select(self.text)
+
+        Button:
+            text: '>='
+            size_hint_y: None
+            height: 30
+            on_press: drop_down.select(self.text)
+
+
+<ExtremumDropDown>:
+    drop_down: drop_down.__self__
+    Button:
+        size_hint: (.1, 1)
+        text: root.selected_value
+        on_release: drop_down.open(self)
+        on_parent: drop_down.dismiss()
+
+    DropDown:
+        id: drop_down
+        on_select: root.selected_value = '{}'.format(args[1])
+        Button:
+            text: 'max'
+            size_hint_y: None
+            height: 30
+            on_press: drop_down.select(self.text)
+
+        Button:
+            text: 'min'
+            size_hint_y: None
+            height: 30
+            on_press: drop_down.select(self.text)

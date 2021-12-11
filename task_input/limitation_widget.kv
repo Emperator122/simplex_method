@@ -1,0 +1,24 @@
+#:import SignDropDown task_input.dropdown_widgets
+
+<LimitationWidget>:
+    sign: drop_down.selected_value
+    free_coefficient: free_coefficient_input.text
+    coefficients: coefficients_input.text
+
+    spacing: 25
+    padding: [10, 0, 10, 0]
+    TextInput:
+        id: coefficients_input
+        multiline: False
+        size_hint: (1.5, .6)
+        text: root.coefficients
+
+    SignDropDown:
+        id: drop_down
+        selected_value: root.sign
+
+    TextInput:
+        id: free_coefficient_input
+        multiline: False
+        size_hint: (1.5, .6)
+        text: root.free_coefficient

@@ -1,0 +1,18 @@
+#:import InputScreen task_input.input_screen
+#:import SimplexTableScreen simplex_table_output.simplex_table_screen
+
+<Navigator>:
+    id: navigator
+
+    input_screen: input_screen
+    simplex_tables_screen: simplex_tables_screen
+
+    InputScreen:
+        id: input_screen
+        name: 'input_screen'
+        manager: navigator
+
+    SimplexTableScreen:
+        id: simplex_tables_screen
+        name: "simplex_tables_screen"
+        manager: navigator

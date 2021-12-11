@@ -1,16 +1,19 @@
 from kivy.uix.label import Label
-from kivy.uix.widget import Widget
 from kivy.lang import Builder
 from kivy.uix.gridlayout import GridLayout
 from kivy.properties import (
-    NumericProperty, ReferenceListProperty, ObjectProperty
+    NumericProperty, ColorProperty, ObjectProperty
  )
 
 
-Builder.load_file('widgets/simplex_table_view.kv')
+Builder.load_file('simplex_table_output/simplex_table.kv')
 
 
 class BorderedLabel(Label):
+    DEFAULT_COLOR = [0, 1, 0, 1]
+
+    border_color = ColorProperty(DEFAULT_COLOR)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -32,8 +35,11 @@ class SimplexTableGrid(GridLayout):
         super().__init__(**kwargs)
 
     def build_table(self, table_index=0):
-        def add_column(text):
-            self.add_widget(BorderedLabel(text=text))
+        def add_column(text, text_color=None):
+            if text_color is None:
+                self.add_widget(BorderedLabel(text=text))
+            else:
+                self.add_widget(BorderedLabel(text=text, color=text_color))
         self.clear_widgets()
         table = self.sm_result.simplex_tables[table_index]
         self.cols = table.values.shape[1] + 1
@@ -46,7 +52,16 @@ class SimplexTableGrid(GridLayout):
             basis_item = table.basis[i]
             add_column(str(basis_item))
             for j in range(table.values.shape[1]):
-                add_column(str(table.values[i, j]))
+                # select color
+                color = None
+                if j == table.main_column and i == table.main_row:
+                    color = [1, 0, 1, 1]
+                elif i == table.main_row:
+                    color = [1, 0, 0, 1]
+                elif j == table.main_column:
+                    color = [0, 0, 1, 1]
+
+                add_column('%.3f' % table.values[i, j], color)
 
     def load_next(self):
         if not self.has_next:
