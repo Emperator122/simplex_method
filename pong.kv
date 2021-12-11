@@ -34,6 +34,7 @@
 
 
 <SignDropDown>:
+    drop_down: drop_down.__self__
     Button:
         size_hint: (.1, .6)
         text: root.selected_value
@@ -63,25 +64,32 @@
 
 
 <LimitationWidget>:
-    sign: sign_selector.selected_value
+    sign: drop_down.selected_value
+    free_coefficient: free_coefficient_input.text
+    coefficients: coefficients_input.text
+
     spacing: 25
     padding: [10, 0, 10, 0]
     TextInput:
+        id: coefficients_input
         multiline: False
         size_hint: (1.5, .6)
-        on_text: root.coefficients = self.text
+        text: root.coefficients
 
     SignDropDown:
-        id: sign_selector
+        id: drop_down
+        selected_value: root.sign
 
     TextInput:
+        id: free_coefficient_input
         multiline: False
         size_hint: (1.5, .6)
-        on_text: root.free_coefficient = self.text
+        text: root.free_coefficient
 
 
 <InputScreen>:
     limitations_list_layout: limitations_list
+    f: f_input.text
     BoxLayout:
         orientation: 'vertical'
         padding: [5, 5, 5, 5]
@@ -89,20 +97,23 @@
 
         Label:
             size_hint: (1, .1)
-            text: 'Введите коэффициенты для f(x)'
+            text: 'Введите коэффициенты для f(x) (через \';\')'
         TextInput:
             id: f_input
+            size_hint: (1, .1)
             multiline: False
+            text: root.f
 
         BoxLayout:
             orientation: 'vertical'
+
             Label:
                 size_hint: (1, .3)
                 bold: True
                 text: 'Ограничения'
 
             BoxLayout:
-                padding: [10, 0, 10, 0]
+                padding: [10, 0, 10, 7]
                 size_hint: (1, .1)
                 orientation: 'horizontal'
 
@@ -123,19 +134,21 @@
                 BoxLayout:
                     orientation: 'vertical'
                     size_hint_y: None
+                    height: self.minimum_height
                     id: limitations_list
 
-            BoxLayout:
-                orientation: 'horizontal'
-                Button:
-                    size_hint: (1, .3)
-                    text: 'Добавить ограничение'
-                    on_release: root.add_limitation()
-                Button:
-                    size_hint: (1, .3)
-                    text: 'Удалить последнее ограничение'
-                    on_release: root.remove_last_limitation()
-
+        BoxLayout:
+            padding: [0, 5, 0, 5]
+            size_hint: (1, .15)
+            spacing: 10
+            Button:
+                size_hint: (1, 1)
+                text: 'Добавить ограничение'
+                on_release: root.add_limitation()
+            Button:
+                size_hint: (1, 1)
+                text: 'Удалить последнее ограничение'
+                on_release: root.remove_last_limitation()
 
         Button:
             size_hint: (1, .2)

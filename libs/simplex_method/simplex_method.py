@@ -7,6 +7,18 @@ class Sign(IntEnum):
     LEQ = 3
     EQ = 2
     GEQ = 1
+    UNKNOWN = 4
+
+    @staticmethod
+    def from_string(string):
+        if string == '=':
+            return Sign.EQ
+        elif string == '>=':
+            return Sign.GEQ
+        elif string == '<=':
+            return Sign.LEQ
+        else:
+            return Sign.UNKNOWN
 
 
 class SimplexMethod:

@@ -27,9 +27,9 @@ class SimplexTableScreen(Screen):
 
 
 class LimitationWidget(BoxLayout):
-    coefficients = ObjectProperty(None)
-    sign = StringProperty(None)
-    free_coefficient = ObjectProperty(None)
+    coefficients = StringProperty('')
+    sign = StringProperty('?')
+    free_coefficient = StringProperty('')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -45,16 +45,41 @@ class SignDropDown(BoxLayout):
 
 
 class InputScreen(Screen):
-    f = ObjectProperty(None)
-    limitations_list = ObjectProperty([])
+    f = StringProperty('')
     limitations_list_layout = ObjectProperty(None)
 
     def calculate(self):
-        function = [1, 3]
-        conditions = [
-            ([1, 1, 2], Sign.LEQ),
-            ([2, 3, 6], Sign.GEQ),
-        ]
+        # function = [1, 3]
+        # conditions = [
+        #     ([1, 1, 2], Sign.LEQ),
+        #     ([2, 3, 6], Sign.GEQ),
+        # ]
+
+        # if we have limitations
+        if len(self.limitations_list_layout.children) == 0:
+            return
+
+        # help function
+        def sanitize_str(string: str):
+            return string.strip().strip(';')
+
+        # convert string to array of floats
+        function = list(map(lambda el: float(el), sanitize_str(self.f).split(';')))
+
+        # build conditions list
+        conditions = []
+        for i in range(len(self.limitations_list_layout.children)-1, -1, -1):
+            limitation_widget = self.limitations_list_layout.children[i]
+            # coefficients
+            condition_coefficients = []
+            condition_coefficients.extend(list(map(lambda el: float(el),
+                                                   sanitize_str(limitation_widget.coefficients).split(';'))))
+            condition_coefficients.append(float(sanitize_str(limitation_widget.free_coefficient)))
+            # sign
+            sign = Sign.from_string(sanitize_str(limitation_widget.sign))
+            # add condition
+            conditions.append((condition_coefficients, sign))
+
         sm = SimplexMethod.problem(function, conditions)
         sm_result = sm.calculate()
         return sm_result
@@ -67,7 +92,6 @@ class InputScreen(Screen):
         if len(layout.children) == 0:
             return
         layout.remove_widget(layout.children[0])
-
 
 
 class PongApp(App):
