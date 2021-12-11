@@ -10,8 +10,6 @@ class Navigator(ScreenManager):
     input_screen = ObjectProperty(None)
     simplex_tables_screen = ObjectProperty(None)
 
-    sm_result = ObjectProperty(None)
-
     def open_screen(self, name, attributes: dict = None):
         target_screen = self.get_screen(name)
         if attributes is not None:
