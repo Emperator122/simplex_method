@@ -78,4 +78,5 @@ class SimplexTableGrid(GridLayout):
     def on_sm_result(self, instance, value):
         if self.sm_result is not None:
             self.count = len(self.sm_result.simplex_tables)
+            self.current_index = 0
             self.build_table(table_index=self.current_index)
