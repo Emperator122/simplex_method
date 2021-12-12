@@ -2,8 +2,8 @@ from kivy.app import App
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager, WipeTransition
 from kivy.lang import Builder
-
-Builder.load_file('navigator.kv')
+import os, sys
+from kivy.resources import resource_add_path
 
 
 class Navigator(ScreenManager):
@@ -25,4 +25,7 @@ class SimplexMethodApp(App):
 
 
 if __name__ == '__main__':
+    if hasattr(sys, '_MEIPASS'):
+        resource_add_path(os.path.join(sys._MEIPASS))
+    Builder.load_file('navigator.kv')
     SimplexMethodApp().run()
