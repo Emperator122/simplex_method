@@ -41,6 +41,8 @@ class SimplexTableGrid(GridLayout):
             else:
                 self.add_widget(BorderedLabel(text=text, color=text_color))
         self.clear_widgets()
+        if len(self.sm_result.simplex_tables) == 0:
+            return
         table = self.sm_result.simplex_tables[table_index]
         self.cols = table.values.shape[1] + 1
         # header

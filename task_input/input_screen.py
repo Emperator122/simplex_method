@@ -2,7 +2,7 @@ from kivy.properties import (
     ObjectProperty, StringProperty
  )
 from kivy.uix.screenmanager import Screen
-from libs.simplex_method.simplex_method import SimplexMethod, Sign, Extremum
+from libs.simplex_method.simplex_method import SimplexMethod, Sign, Extremum, SimplexMethodResult
 from task_input.limitation_widget import LimitationWidget
 from kivy.lang import Builder
 
@@ -13,6 +13,12 @@ class InputScreen(Screen):
     f = StringProperty('')
     extremum = StringProperty('')
     limitations_list_layout = ObjectProperty(None)
+
+    error_result = None
+
+    def __init__(self, **kw):
+        self.error_result = SimplexMethodResult.unknown()
+        super().__init__(**kw)
 
     def calculate(self):
         # if we have limitations
@@ -45,6 +51,7 @@ class InputScreen(Screen):
 
         sm = SimplexMethod.problem(function, conditions, extremum)
         sm_result = sm.calculate()
+
         return sm_result
 
     def add_limitation(self):

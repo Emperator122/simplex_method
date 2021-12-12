@@ -1,4 +1,5 @@
 #:import ExtremumDropDown task_input.dropdown_widgets
+#:import ErrorPopup error.error_popup.ErrorPopup
 
 <InputScreen>:
     limitations_list_layout: limitations_list
@@ -82,4 +83,9 @@
         Button:
             size_hint: (1, .1)
             text: 'Перейти к таблицам'
-            on_press: root.manager.open_screen('simplex_tables_screen', {'sm_result': root.calculate() })
+            on_press:
+                result = ErrorPopup.error_checker(root.calculate)
+                if result is not None: \
+                root.manager.open_screen('simplex_tables_screen', {'sm_result': result })
+
+
