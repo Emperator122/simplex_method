@@ -1,7 +1,7 @@
 #:import SimplexTableGrid simplex_table_output.simplex_table
 
 <SimplexTableScreen>:
-
+    error_bubble_box: error_bubble_box
     BoxLayout:
         orientation: 'vertical'
         size: self.parent.size
@@ -25,10 +25,14 @@
                 id: simplex_table_1
                 padding: [0, 0, 0, 0]
                 height: self.minimum_height
-                size_hint_y: None
                 size_hint: (1, .9)
 
                 sm_result: root.sm_result
+
+        BoxLayout:
+            id: error_bubble_box
+            orientation: 'vertical'
+            size_hint: (2, 1)
 
         Label:
             size_hint: (1, .1)
@@ -42,6 +46,22 @@
             Button:
                 text: 'Предыдущая'
                 on_press: simplex_table_1.load_previous()
+
             Button:
                 text: 'Следующая'
                 on_press: simplex_table_1.load_next()
+
+<ErrorBubble>:
+    arrow_pos: 'top_mid'
+    padding: [10,10,10,10]
+    size_hint: (1, 1)
+    pos_hint: {'x': 0.5, 'y': 1}
+    ScrollView:
+        size_hint: (1, 1)
+        BubbleButton:
+            text_size: self.width, None
+            halign: 'center'
+            size_hint: (1, None)
+            height: self.texture_size[1] if self.texture_size[1] > root.size[1] else root.size[1]
+            text: root.error_text
+            on_release: root.on_tap(False)
