@@ -2,10 +2,11 @@ from libs.simplex_method.simplex_method import SimplexMethod, Sign, Extremum
 
 
 sm_result = SimplexMethod.problem(
-            function=[1, 3],
+            function=[5,8,6],
             conditions=[
-                ([1, 1, 2], Sign.LEQ),
-                ([2, 3, 6], Sign.GEQ),
+                ([5,5,2,1200], Sign.LEQ),
+                ([4,0,3,300], Sign.LEQ),
+                ([0,2,4,800], Sign.LEQ),
             ],
             extremum=Extremum.MAX
         ).calculate()
