@@ -263,18 +263,20 @@ class SimplexMethod:
 
         # else use Bland's rule
         help_table = []
+        help_table_rows = []
         for i_ in min_indexes:  # build help table
             i = i_[0]
             main_el = simplex[i, main_column_index]
             if main_el == 0:
                 continue
             help_table.append((np.array([simplex[i, :]])/main_el)[0])
+            help_table_rows.append(i)
         # find first row with min column value
         help_table = np.array(help_table)
         for j in range(help_table.shape[1]):
             temp_indexes = get_min_indexes(help_table[:, j])
             if len(temp_indexes) == 1:
-                return temp_indexes[0][0]
+                return help_table_rows[temp_indexes[0][0]]
 
         # else return first index
         return min_indexes[0][0]
