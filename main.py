@@ -2,8 +2,9 @@ from kivy.app import App
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager, WipeTransition
 from kivy.lang import Builder
-import os, sys
 from kivy.resources import resource_add_path
+import os
+import sys
 
 
 class Navigator(ScreenManager):
