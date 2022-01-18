@@ -21,7 +21,7 @@ class Navigator(ScreenManager):
 
 class SimplexMethodApp(App):
     def build(self):
-        self.title = 'Симплек метод'
+        self.title = 'Симплекс метод'
         return Navigator(transition=WipeTransition())
 
 

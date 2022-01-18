@@ -5,7 +5,7 @@ from libs.simplex_method.task_enums import Extremum, Sign
 
 class SimplexMethod:
     SKIP = float('inf')
-    ITER_LIMIT = 9999999
+    ITER_LIMIT = 100
 
     simplex_table = None
     simplex_basis_map = None
@@ -147,7 +147,8 @@ class SimplexMethod:
 
                 # header without free element and synthetic variables
                 check_interval = len(simplex_top_map) - 1 - synthetics_count
-                if np.max(simplex_1[basis_index, :check_interval]) == 0:  # if we have only zeros on  check_interval
+                # if we have only zeros on  check_interval
+                if np.max(simplex_1[basis_index, :check_interval]) < 1.0e-10:
                     # remove variable and function from simplex table, basis_map and top_map
                     simplex_1 = np.delete(simplex_1, basis_index, axis=0)
                     simplex_1 = np.delete(simplex_1, header_index, axis=1)
@@ -205,7 +206,7 @@ class SimplexMethod:
             # change basis
             simplex_basis_map[main_row] = simplex_top_map[main_column]
 
-            assert relation.min() != self.SKIP, 'can\'t find any decision'
+            assert np.min(relation) != self.SKIP, 'can\'t find any decision'
             iter_number += 1
 
         # fill and return result
