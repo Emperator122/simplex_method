@@ -148,7 +148,8 @@ class SimplexMethod:
                 # header without free element and synthetic variables
                 check_interval = len(simplex_top_map) - 1 - synthetics_count
                 # if we have only zeros on  check_interval
-                if np.max(simplex_1[basis_index, :check_interval]) < 1.0e-10:
+                if np.max(np.abs(simplex_1[basis_index, :header_index])) < 1.0e-10\
+                        and np.max(np.abs(simplex_1[basis_index, header_index+1:])) < 1.0e-10:
                     # remove variable and function from simplex table, basis_map and top_map
                     simplex_1 = np.delete(simplex_1, basis_index, axis=0)
                     simplex_1 = np.delete(simplex_1, header_index, axis=1)
